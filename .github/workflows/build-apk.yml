@@ -16,6 +16,107 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Apply premium header and footer icons
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("app/src/main/java/az/budcem/premium/MainActivity.java")
+          src = path.read_text(encoding="utf-8")
+
+          pattern = r'''    private void render\(String title, LinearLayout body, int activeTab\) \{.*?    private LinearLayout vertical\(\) \{'''
+          replacement = '''    private void render(String title, LinearLayout body, int activeTab) {
+              LinearLayout root = new LinearLayout(this);
+              root.setOrientation(LinearLayout.VERTICAL);
+              root.setBackgroundColor(CREAM);
+
+              LinearLayout header = new LinearLayout(this);
+              header.setOrientation(LinearLayout.VERTICAL);
+              header.setPadding(dp(20), dp(16), dp(20), dp(12));
+
+              TextView brand = tv("Büdcəm", 27, INK, true);
+              header.addView(brand);
+
+              TextView h = tv(title, 12, PURPLE, true);
+              h.setPadding(dp(9), dp(4), dp(9), dp(4));
+              h.setBackground(rounded(PURPLE_SOFT, 12));
+              LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+                      ViewGroup.LayoutParams.WRAP_CONTENT,
+                      ViewGroup.LayoutParams.WRAP_CONTENT
+              );
+              titleLp.setMargins(0, dp(5), 0, 0);
+              h.setLayoutParams(titleLp);
+              header.addView(h);
+              root.addView(header);
+
+              ScrollView scroll = new ScrollView(this);
+              scroll.setFillViewport(true);
+              body.setPadding(dp(16), dp(6), dp(16), dp(24));
+              scroll.addView(body);
+              LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
+              root.addView(scroll, slp);
+
+              LinearLayout nav = new LinearLayout(this);
+              nav.setOrientation(LinearLayout.HORIZONTAL);
+              nav.setGravity(Gravity.CENTER);
+              nav.setPadding(dp(7), dp(7), dp(7), dp(9));
+              nav.setBackgroundColor(WHITE);
+              nav.addView(navButton("Ana", 0, activeTab == 0, v -> showHome()));
+              nav.addView(navButton("Əməliyyat", 1, activeTab == 1, v -> showTransactions()));
+              nav.addView(navButton("Büdcə", 2, activeTab == 2, v -> showBudgets()));
+              nav.addView(navButton("Borclar", 3, activeTab == 3, v -> showDebts()));
+              nav.addView(navButton("Təhlil", 4, activeTab == 4, v -> showAnalysis()));
+              root.addView(nav);
+              setContentView(root);
+          }
+
+          private LinearLayout navButton(String label, int index, boolean active, View.OnClickListener click) {
+              LinearLayout item = new LinearLayout(this);
+              item.setOrientation(LinearLayout.VERTICAL);
+              item.setGravity(Gravity.CENTER);
+              item.setPadding(dp(3), dp(4), dp(3), dp(3));
+              item.setBackground(active ? rounded(PURPLE_SOFT, 18) : rounded(Color.TRANSPARENT, 18));
+
+              String icon;
+              switch (index) {
+                  case 0: icon = "⌂"; break;
+                  case 1: icon = "⇄"; break;
+                  case 2: icon = "₼"; break;
+                  case 3: icon = "▤"; break;
+                  default: icon = "▥"; break;
+              }
+
+              TextView iconView = tv(icon, index == 2 ? 20 : 21, active ? PURPLE : MUTED, true);
+              iconView.setGravity(Gravity.CENTER);
+              item.addView(iconView, new LinearLayout.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT,
+                      dp(28)
+              ));
+
+              TextView labelView = tv(label, 10, active ? PURPLE : MUTED, active);
+              labelView.setGravity(Gravity.CENTER);
+              labelView.setSingleLine(true);
+              item.addView(labelView, new LinearLayout.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT,
+                      dp(20)
+              ));
+
+              item.setOnClickListener(click);
+              item.setLayoutParams(new LinearLayout.LayoutParams(0, dp(60), 1));
+              return item;
+          }
+
+          private LinearLayout vertical() {'''
+
+          updated, count = re.subn(pattern, replacement, src, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("UI patch target was not found exactly once")
+
+          path.write_text(updated, encoding="utf-8")
+          PY
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -49,5 +150,5 @@ jobs:
           gh release create "build-${GITHUB_RUN_NUMBER}" Budcem-Premium.apk \
             --target "${GITHUB_SHA}" \
             --title "Büdcəm Premium • Build ${GITHUB_RUN_NUMBER}" \
-            --notes "Android üçün quraşdırıla bilən Büdcəm Premium APK. Telefona Budcem-Premium.apk faylını yükləyib quraşdırın." \
+            --notes "Premium header və ikonlu alt menyu ilə yenilənmiş Android APK." \
             --latest
