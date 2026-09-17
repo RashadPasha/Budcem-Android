@@ -117,6 +117,9 @@ jobs:
           path.write_text(updated, encoding="utf-8")
           PY
 
+      - name: Apply Büdcəm v1.1 finance update
+        run: python3 ci/app_patch_v15.py
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -155,6 +158,6 @@ jobs:
         run: |
           gh release create "build-${GITHUB_RUN_NUMBER}" Budcem-Premium.apk \
             --target "${GITHUB_SHA}" \
-            --title "Büdcəm Premium • Build ${GITHUB_RUN_NUMBER}" \
-            --notes "Premium header, ikonlu alt menyu və gələcək versiyalar üçün sabit Android imzası." \
+            --title "Büdcəm Premium • v1.1 • Build ${GITHUB_RUN_NUMBER}" \
+            --notes "v1.1: əməliyyat redaktə/silmə, birdəfəlik borc/alacaq, tarixlərin istəyə bağlı olması, əvvəlki premium header və ikonlu alt menyu." \
             --latest
