@@ -118,7 +118,9 @@ jobs:
           PY
 
       - name: Apply Büdcəm v1.1 finance update
-        run: python3 ci/app_patch_v15.py
+        run: |
+          python3 ci/fix_v15_patch_runner.py
+          python3 ci/app_patch_v15.py
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
