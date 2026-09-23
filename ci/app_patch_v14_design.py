@@ -6,9 +6,23 @@ main = MAIN.read_text(encoding="utf-8")
 
 def replace_once(text, pattern, replacement, label):
     updated, count = re.subn(pattern, lambda m: replacement, text, count=1, flags=re.S)
-    if count != 1:
-        raise SystemExit(f"{label}: expected once, found {count}")
-    return updated
+    if count == 1:
+        return updated
+
+    markers = {
+        "Premium shell": ("    private void render(", "    private LinearLayout vertical() {"),
+        "Dashboard": ("    private void showHome() {", "    private void showTransactions() {"),
+        "Transactions / income / create": ("    private void showTransactions() {", "    private void showReceivePendingDialog(long pendingId, double amount) {"),
+        "Separated debt/credit/reports/more": ("    private void showDebts() {", "    private void showAnalysis() {"),
+    }
+    if label in markers:
+        start_marker, end_marker = markers[label]
+        start = text.find(start_marker)
+        end = text.find(end_marker, start + len(start_marker)) if start >= 0 else -1
+        if start >= 0 and end >= 0:
+            return text[:start] + replacement + text[end + len(end_marker):]
+
+    raise SystemExit(f"{label}: expected once, found {count}")
 
 def exact_once(text, old, new, label):
     count = text.count(old)
