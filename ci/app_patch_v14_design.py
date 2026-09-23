@@ -9,20 +9,23 @@ def replace_once(text, pattern, replacement, label):
     if count == 1:
         return updated
 
-    markers = {
-        "Premium shell": ("    private void render(", "    private LinearLayout vertical() {"),
-        "Dashboard": ("    private void showHome() {", "    private void showTransactions() {"),
-        "Transactions / income / create": ("    private void showTransactions() {", "    private void showReceivePendingDialog(long pendingId, double amount) {"),
-        "Separated debt/credit/reports/more": ("    private void showDebts() {", "    private void showAnalysis() {"),
+    marker_patterns = {
+        "Premium shell": (r"private\s+void\s+render\s*\(", r"private\s+LinearLayout\s+vertical\s*\(\s*\)\s*\{"),
+        "Dashboard": (r"private\s+void\s+showHome\s*\(\s*\)\s*\{", r"private\s+void\s+showTransactions\s*\(\s*\)\s*\{"),
+        "Transactions / income / create": (r"private\s+void\s+showTransactions\s*\(\s*\)\s*\{", r"private\s+void\s+showReceivePendingDialog\s*\(long\s+pendingId,\s*double\s+amount\)\s*\{"),
+        "Separated debt/credit/reports/more": (r"private\s+void\s+showDebts\s*\(\s*\)\s*\{", r"private\s+void\s+showAnalysis\s*\(\s*\)\s*\{"),
     }
-    if label in markers:
-        start_marker, end_marker = markers[label]
-        start = text.find(start_marker)
-        end = text.find(end_marker, start + len(start_marker)) if start >= 0 else -1
-        if start >= 0 and end >= 0:
-            return text[:start] + replacement + text[end + len(end_marker):]
+    if label in marker_patterns:
+        start_re, end_re = marker_patterns[label]
+        sm = re.search(start_re, text)
+        em = re.search(end_re, text[sm.end():] if sm else "")
+        if sm and em:
+            end_abs_start = sm.end() + em.start()
+            end_abs_end = sm.end() + em.end()
+            line_start = text.rfind("\n", 0, sm.start()) + 1
+            return text[:line_start] + replacement + text[end_abs_end:]
 
-    raise SystemExit(f"{label}: expected once, found {count}")
+    raise SystemExit(f"{label}: expected once, found {count}; render={text.find('render(')}, vertical={text.find('vertical(')}")
 
 def exact_once(text, old, new, label):
     count = text.count(old)
