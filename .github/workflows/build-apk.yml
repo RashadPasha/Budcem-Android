@@ -131,6 +131,9 @@ jobs:
       - name: Apply Büdcəm v1.3 reporting update
         run: python3 ci/app_patch_v13.py
 
+      - name: Apply Büdcəm v1.4 premium redesign
+        run: python3 ci/app_patch_v14_design.py
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -169,6 +172,6 @@ jobs:
         run: |
           gh release create "build-${GITHUB_RUN_NUMBER}" Budcem-Premium.apk \
             --target "${GITHUB_SHA}" \
-            --title "Büdcəm Premium • v1.3 • Build ${GITHUB_RUN_NUMBER}" \
-            --notes "v1.3: CR/DR balans hesabatı, bütün tarix sahələrində seçim pəncərəsi, kateqoriya redaktəsi, borc və kredit cədvəlləri, əməliyyatlarda tarix aralığı filtri." \
+            --title "Büdcəm Premium • v1.4 • Build ${GITHUB_RUN_NUMBER}" \
+            --notes "v1.4: premium mavi-ağ dizayn, dashboard ana səhifə, ayrıca Gəlir, Əməliyyat, Əməliyyat yarat, Borc, Kredit, Hesabat, Büdcə, Kateqoriya və Təhlil səhifələri; funksiyalar qorunub." \
             --latest
