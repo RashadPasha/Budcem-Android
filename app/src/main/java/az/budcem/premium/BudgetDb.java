@@ -398,6 +398,24 @@ public class BudgetDb extends SQLiteOpenHelper {
     }
 
 
+    public Cursor transactionsBetween(String fromDate, String toDate) {
+        return getReadableDatabase().rawQuery(
+                "SELECT t.id AS _id,t.kind,t.amount,t.period,t.date,t.note,t.debt_id,COALESCE(c.name,'Borc') AS category " +
+                "FROM transactions t LEFT JOIN categories c ON c.id=t.category_id " +
+                "WHERE t.date>=? AND t.date<=? ORDER BY t.date DESC,t.id DESC",
+                new String[]{fromDate,toDate});
+    }
+
+    public void updateTransaction(long id, double amount, String date, String note) {
+        ContentValues v = new ContentValues();
+        v.put("amount", amount); v.put("date", date); v.put("note", note == null ? "" : note);
+        getWritableDatabase().update("transactions", v, "id=? AND debt_id=0", new String[]{String.valueOf(id)});
+    }
+
+    public void deleteTransaction(long id) {
+        getWritableDatabase().delete("transactions", "id=? AND debt_id=0", new String[]{String.valueOf(id)});
+    }
+
     public Cursor debtsByType(String debtType) {
         return getReadableDatabase().rawQuery("SELECT id AS _id,name,direction,principal,remaining,monthly,first_due,next_due,created FROM debts WHERE debt_type=? ORDER BY remaining DESC,id DESC", new String[]{debtType});
     }
