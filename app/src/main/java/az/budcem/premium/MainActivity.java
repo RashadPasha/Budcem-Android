@@ -243,6 +243,7 @@ public class MainActivity extends Activity {
         hero.addView(heroValue);
         hero.addView(tv("FINANCE CONTROL     •••• 365", 12, Color.rgb(255, 241, 230), true));
         hero.addView(tv("Sərbəst: " + azn(free) + "   |   Yığım: " + azn(saved), 12, Color.rgb(255, 241, 230), false));
+        hero.addView(tv("●  "+LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("az","AZ"))),11,Color.rgb(255,230,210),false));
         body.addView(hero);
 
         LinearLayout row1 = new LinearLayout(this);
@@ -259,8 +260,8 @@ public class MainActivity extends Activity {
 
         LinearLayout row2 = new LinearLayout(this);
         row2.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout d1 = metricCard("Verəcəyim borc", azn(payable), Color.rgb(255, 235, 226));
-        LinearLayout d2 = metricCard("Alacağım", azn(receivable), Color.rgb(225, 246, 237));
+        LinearLayout d1 = metricCard("Verəcəyim borc", azn(payable), Color.rgb(39, 30, 34));
+        LinearLayout d2 = metricCard("Alacağım", azn(receivable), Color.rgb(25, 42, 38));
         row2.addView(d1, half);
         row2.addView(d2, half2);
         body.addView(row2);
