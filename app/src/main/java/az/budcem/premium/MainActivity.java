@@ -44,16 +44,16 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
-    private static final int CREAM = Color.rgb(9, 11, 15);
-    private static final int PURPLE = Color.rgb(255, 86, 24);
-    private static final int PURPLE_SOFT = Color.rgb(38, 29, 27);
-    private static final int YELLOW = Color.rgb(255, 126, 0);
-    private static final int YELLOW_SOFT = Color.rgb(39, 30, 23);
-    private static final int INK = Color.rgb(245, 246, 248);
-    private static final int MUTED = Color.rgb(151, 157, 167);
-    private static final int GREEN = Color.rgb(42, 197, 112);
-    private static final int RED = Color.rgb(248, 86, 82);
-    private static final int WHITE = Color.rgb(21, 24, 30);
+    private static final int CREAM = Color.rgb(244, 247, 251);
+    private static final int PURPLE = Color.rgb(22, 48, 82);
+    private static final int PURPLE_SOFT = Color.rgb(232, 239, 248);
+    private static final int YELLOW = Color.rgb(49, 83, 125);
+    private static final int YELLOW_SOFT = Color.rgb(239, 244, 250);
+    private static final int INK = Color.rgb(23, 37, 58);
+    private static final int MUTED = Color.rgb(112, 128, 150);
+    private static final int GREEN = Color.rgb(25, 132, 91);
+    private static final int RED = Color.rgb(202, 77, 88);
+    private static final int WHITE = Color.rgb(255, 255, 255);
     private static final String CHANNEL_ID = "budcem_due_dates";
 
     private final DecimalFormat money = new DecimalFormat("#,##0.00");
@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
         GradientDrawable d;
         if (color == PURPLE) {
             d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                    new int[]{Color.rgb(255, 137, 0), Color.rgb(255, 79, 24), Color.rgb(205, 42, 12)});
+                    new int[]{Color.rgb(35, 67, 108), Color.rgb(19, 43, 75), Color.rgb(13, 31, 56)});
         } else {
             d = new GradientDrawable();
             d.setColor(color);
@@ -135,7 +135,8 @@ public class MainActivity extends Activity {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
         c.setPadding(dp(18), dp(16), dp(18), dp(16));
-        c.setBackground(rounded(color, 24));
+        c.setBackground(rounded(color, 20));
+        c.setElevation(dp(2));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(0, 0, 0, dp(12));
         c.setLayoutParams(lp);
@@ -159,7 +160,8 @@ public class MainActivity extends Activity {
 
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
-        header.setPadding(dp(20), dp(14), dp(20), dp(12));
+        header.setPadding(dp(20), dp(18), dp(20), dp(10));
+        header.setBackgroundColor(CREAM);
         TextView h = tv(title, 23, INK, true);
         header.addView(h);
         root.addView(header);
@@ -174,8 +176,9 @@ public class MainActivity extends Activity {
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
         nav.setGravity(Gravity.CENTER);
-        nav.setPadding(dp(6), dp(7), dp(6), dp(9));
+        nav.setPadding(dp(10), dp(5), dp(10), dp(8));
         nav.setBackgroundColor(WHITE);
+        nav.setElevation(dp(12));
         nav.addView(navButton("⌂", 0, activeTab == 0, v -> showHome()));
         nav.addView(navButton("＋", 1, activeTab == 1, v -> showTransactions()));
         nav.addView(navButton("⇄", 2, activeTab == 2, v -> showDebts()));
@@ -188,7 +191,7 @@ public class MainActivity extends Activity {
     private Button navButton(String label, int index, boolean active, View.OnClickListener click) {
         Button b = new Button(this);
         b.setText(label);
-        b.setTextSize(23);
+        b.setTextSize(25);
         b.setAllCaps(false);
         b.setTextColor(active ? PURPLE : MUTED);
         b.setTypeface(Typeface.DEFAULT, active ? Typeface.BOLD : Typeface.NORMAL);
@@ -243,7 +246,7 @@ public class MainActivity extends Activity {
         totals.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         totals.addView(right, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         summary.addView(totals);
-        TextView totalLine = tv("Cəmi dövriyyə: " + azn(total), 12, MUTED, true);
+        TextView totalLine = tv("Cəmi: " + azn(total), 13, PURPLE, true);
         totalLine.setPadding(0, dp(10), 0, 0);
         summary.addView(totalLine);
         body.addView(summary);
@@ -259,8 +262,8 @@ public class MainActivity extends Activity {
         cellA.setMargins(0, 0, dp(6), dp(8));
         LinearLayout.LayoutParams cellB = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
         cellB.setMargins(dp(6), 0, 0, dp(8));
-        first.addView(metricCard("Gəlir", azn(monthIncome), Color.rgb(25, 42, 38)), cellA);
-        first.addView(metricCard("Xərc", azn(monthExpense), Color.rgb(39, 30, 34)), cellB);
+        first.addView(metricCard("Gəlir", azn(monthIncome), Color.rgb(232, 244, 239)), cellA);
+        first.addView(metricCard("Xərc", azn(monthExpense), Color.rgb(250, 238, 240)), cellB);
         second.addView(metricCard("Borclar", azn(sumDebtType("PERSONAL")), PURPLE_SOFT), cellA);
         second.addView(metricCard("Alacaqlar", azn(db.totalDebtRemaining("RECEIVABLE")), YELLOW_SOFT), cellB);
         third.addView(metricCard("Kreditlər", azn(sumDebtType("CREDIT")), PURPLE_SOFT), cellA);
@@ -298,7 +301,7 @@ public class MainActivity extends Activity {
                 latest.addView(item);
                 if (count < 5) {
                     View line = new View(this);
-                    line.setBackgroundColor(Color.rgb(43, 47, 55));
+                    line.setBackgroundColor(Color.rgb(229, 234, 241));
                     latest.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
                 }
             }
@@ -442,7 +445,7 @@ public class MainActivity extends Activity {
                         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END);
                         actions.addView(actionButton("✎ Redaktə",PURPLE_SOFT,PURPLE,v->editTransaction(id,amount,date,note)));
                         LinearLayout.LayoutParams delp=new LinearLayout.LayoutParams(dp(100),dp(44));delp.setMargins(dp(8),0,0,0);
-                        actions.addView(actionButton("⌫ Sil",Color.rgb(54,30,32),RED,v->{
+                        actions.addView(actionButton("⌫ Sil",Color.rgb(250, 237, 239),RED,v->{
                             new AlertDialog.Builder(this).setTitle("Əməliyyatı sil")
                               .setMessage("Bu əməliyyatı silmək istədiyinə əminsən?")
                               .setNegativeButton("Ləğv et",null).setPositiveButton("Sil",(dd,ww)->{db.deleteTransaction(id);showTransactionHistory();}).show();
@@ -499,7 +502,7 @@ public class MainActivity extends Activity {
                 int pr = target > 0 ? (int)Math.min(1000, Math.round((saved / target) * 1000)) : 0;
                 pb.setProgress(pr);
                 pb.setProgressTintList(ColorStateList.valueOf(PURPLE));
-                pb.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(48,53,61)));
+                pb.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(226, 233, 242)));
                 LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(10)); pp.setMargins(0,dp(12),0,dp(12));
                 bc.addView(pb, pp);
                 double pct = target > 0 ? saved * 100 / target : 0;
@@ -520,7 +523,8 @@ public class MainActivity extends Activity {
     private void showDebtList(String type,String title) {
         LinearLayout body=vertical();
         LinearLayout top=card(PURPLE_SOFT);
-        top.addView(tv("Qalıq: "+azn(sumDebtType(type)),16,PURPLE,true));
+        top.addView(tv("Qalıq",12,MUTED,true));
+        top.addView(tv(azn(sumDebtType(type)),22,INK,true));
         top.addView(actionButton(type.equals("CREDIT")?"+ Kredit yarat":"+ Borc yarat",PURPLE,Color.WHITE,v->{creatingDebtType=type;showAddDebtDialog();}));
         body.addView(top);
 
@@ -534,7 +538,7 @@ public class MainActivity extends Activity {
         remainHead.setGravity(Gravity.END);
         headings.addView(remainHead,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
         table.addView(headings);
-        View separator=new View(this);separator.setBackgroundColor(Color.rgb(54,59,68));
+        View separator=new View(this);separator.setBackgroundColor(Color.rgb(221, 228, 238));
         table.addView(separator,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dp(1)));
         int n=0;
         try(Cursor c=db.debtsByType(type)){
@@ -644,7 +648,7 @@ public class MainActivity extends Activity {
         e.setTextSize(15);
         e.setSingleLine(true);
         e.setPadding(dp(13),dp(11),dp(13),dp(11));
-        e.setBackground(outlined(WHITE, 14, Color.rgb(57,62,71)));
+        e.setBackground(outlined(WHITE, 14, Color.rgb(218, 226, 237)));
         if (numeric) e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)); lp.setMargins(0,dp(7),0,0); e.setLayoutParams(lp);
         return e;
