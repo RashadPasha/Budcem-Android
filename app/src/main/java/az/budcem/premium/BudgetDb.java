@@ -11,7 +11,7 @@ import java.util.Locale;
 
 public class BudgetDb extends SQLiteOpenHelper {
     private static final String DB_NAME = "budcem.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public BudgetDb(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -67,12 +67,16 @@ public class BudgetDb extends SQLiteOpenHelper {
                 "paid REAL NOT NULL DEFAULT 0," +
                 "status TEXT NOT NULL DEFAULT 'OPEN')");
 
+        db.execSQL("CREATE TABLE planned_expenses(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL,due_date TEXT NOT NULL,mandatory INTEGER NOT NULL DEFAULT 1,paid REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'OPEN')");
         seed(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // v1
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE debts ADD COLUMN debt_type TEXT NOT NULL DEFAULT 'PERSONAL'");
+            db.execSQL("CREATE TABLE IF NOT EXISTS planned_expenses(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,category TEXT NOT NULL,amount REAL NOT NULL,due_date TEXT NOT NULL,mandatory INTEGER NOT NULL DEFAULT 1,paid REAL NOT NULL DEFAULT 0,status TEXT NOT NULL DEFAULT 'OPEN')");
+        }
     }
 
     private void seed(SQLiteDatabase db) {
@@ -167,6 +171,10 @@ public class BudgetDb extends SQLiteOpenHelper {
     }
 
     public long addDebt(String name, String direction, double principal, double monthly, String firstDue) {
+        return addDebt(name, direction, principal, monthly, firstDue, "PERSONAL");
+    }
+
+    public long addDebt(String name, String direction, double principal, double monthly, String firstDue, String debtType) {
         if (principal <= 0) return -1;
         if (monthly <= 0) monthly = principal;
 
@@ -183,6 +191,7 @@ public class BudgetDb extends SQLiteOpenHelper {
             v.put("first_due", firstDue);
             v.put("next_due", firstDue);
             v.put("created", LocalDate.now().toString());
+            v.put("debt_type", debtType);
             debtId = db.insert("debts", null, v);
 
             LocalDate due = LocalDate.parse(firstDue);
@@ -385,6 +394,27 @@ public class BudgetDb extends SQLiteOpenHelper {
                         "FROM transactions t LEFT JOIN categories c ON c.id=t.category_id " +
                         "ORDER BY t.date DESC,t.id DESC LIMIT ?",
                 new String[]{String.valueOf(safeLimit)});
+    }
+
+
+    public Cursor debtsByType(String debtType) {
+        return getReadableDatabase().rawQuery("SELECT id AS _id,name,direction,principal,remaining,monthly,first_due,next_due,created FROM debts WHERE debt_type=? ORDER BY remaining DESC,id DESC", new String[]{debtType});
+    }
+    public long addPlannedExpense(String name, String category, double amount, String dueDate, boolean mandatory) {
+        ContentValues v = new ContentValues();
+        v.put("name", name.trim()); v.put("category", category); v.put("amount", amount);
+        v.put("due_date", dueDate); v.put("mandatory", mandatory ? 1 : 0);
+        return getWritableDatabase().insert("planned_expenses", null, v);
+    }
+    public Cursor plannedExpenses() {
+        return getReadableDatabase().rawQuery("SELECT id AS _id,name,category,amount,due_date,mandatory,paid,status FROM planned_expenses ORDER BY due_date,id", null);
+    }
+    public double plannedExpenseOutstanding() {
+        try (Cursor c=getReadableDatabase().rawQuery("SELECT COALESCE(SUM(amount-paid),0) FROM planned_expenses WHERE status!='PAID'",null)) { return c.moveToFirst()?c.getDouble(0):0; }
+    }
+    public void payPlannedExpense(long id, double amount) {
+        SQLiteDatabase db=getWritableDatabase();
+        db.execSQL("UPDATE planned_expenses SET paid=MIN(amount,paid+?),status=CASE WHEN paid+?>=amount THEN 'PAID' ELSE 'PARTIAL' END WHERE id=?",new Object[]{amount,amount,id});
     }
 
     public String debtName(long debtId) {
