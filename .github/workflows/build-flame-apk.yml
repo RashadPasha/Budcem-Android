@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - flame-premium-redesign
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
