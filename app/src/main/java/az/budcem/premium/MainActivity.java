@@ -291,7 +291,7 @@ public class MainActivity extends Activity {
                 item.setOrientation(LinearLayout.HORIZONTAL);
                 item.setGravity(Gravity.CENTER_VERTICAL);
                 item.setPadding(0, dp(12), 0, dp(10));
-                TextView left = tv(category + "\\n" + date, 13, INK, true);
+                TextView left = tv(category + "\n" + date, 13, INK, true);
                 TextView right = tv(("INCOME".equals(kind) ? "+ " : "− ") + azn(amount), 13,
                         "INCOME".equals(kind) ? GREEN : RED, true);
                 item.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
