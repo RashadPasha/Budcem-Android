@@ -484,14 +484,14 @@ public class MainActivity extends Activity {
                     row.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
                     TextView value=tv(("INCOME".equals(kind)?"+ ":"− ")+azn(amount),14,"INCOME".equals(kind)?GREEN:RED,true);
                     row.addView(value);item.addView(row);
-                    if(!"PAYABLE".equals(kind)&&!"RECEIVABLE".equals(kind)){
+                    if(c.getLong(c.getColumnIndexOrThrow("debt_id"))==0){
                         LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END);
                         actions.addView(actionButton("✎ Redaktə",PURPLE_SOFT,PURPLE,v->editTransaction(id,amount,date,note)));
                         LinearLayout.LayoutParams delp=new LinearLayout.LayoutParams(dp(100),dp(44));delp.setMargins(dp(8),0,0,0);
                         actions.addView(actionButton("⌫ Sil",Color.rgb(54,30,32),RED,v->{
                             new AlertDialog.Builder(this).setTitle("Əməliyyatı sil")
                               .setMessage("Bu əməliyyatı silmək istədiyinə əminsən?")
-                              .setNegativeButton("Ləğv et",null).setPositiveButton("Sil",(dd,ww)->{db.deleteTransaction(id);load.run();}).show();
+                              .setNegativeButton("Ləğv et",null).setPositiveButton("Sil",(dd,ww)->{db.deleteTransaction(id);showTransactionHistory();}).show();
                         }),delp);
                         item.addView(actions);
                     } else item.addView(tv("Borc/kredit ödənişi — cədvəldən idarə olunur.",11,MUTED,false));
