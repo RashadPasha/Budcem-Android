@@ -57,7 +57,8 @@ public class BudgetDb extends SQLiteOpenHelper {
                 "monthly REAL NOT NULL," +
                 "first_due TEXT NOT NULL," +
                 "next_due TEXT," +
-                "created TEXT NOT NULL)");
+                "created TEXT NOT NULL," +
+                "debt_type TEXT NOT NULL DEFAULT 'PERSONAL')");
 
         db.execSQL("CREATE TABLE debt_schedule(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
