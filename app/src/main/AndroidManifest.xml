@@ -4,7 +4,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Büdcəm"
+        android:label="Finance Control"
         android:icon="@drawable/ic_launcher"
         android:theme="@style/AppTheme">
 
