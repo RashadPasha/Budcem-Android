@@ -44,16 +44,16 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
-    private static final int CREAM = Color.rgb(255, 248, 239);
-    private static final int PURPLE = Color.rgb(123, 97, 255);
-    private static final int PURPLE_SOFT = Color.rgb(236, 229, 255);
-    private static final int YELLOW = Color.rgb(255, 201, 77);
-    private static final int YELLOW_SOFT = Color.rgb(255, 244, 216);
-    private static final int INK = Color.rgb(49, 46, 62);
-    private static final int MUTED = Color.rgb(124, 120, 137);
-    private static final int GREEN = Color.rgb(42, 153, 101);
-    private static final int RED = Color.rgb(213, 76, 76);
-    private static final int WHITE = Color.WHITE;
+    private static final int CREAM = Color.rgb(9, 11, 15);
+    private static final int PURPLE = Color.rgb(255, 86, 24);
+    private static final int PURPLE_SOFT = Color.rgb(38, 29, 27);
+    private static final int YELLOW = Color.rgb(255, 126, 0);
+    private static final int YELLOW_SOFT = Color.rgb(39, 30, 23);
+    private static final int INK = Color.rgb(245, 246, 248);
+    private static final int MUTED = Color.rgb(151, 157, 167);
+    private static final int GREEN = Color.rgb(42, 197, 112);
+    private static final int RED = Color.rgb(248, 86, 82);
+    private static final int WHITE = Color.rgb(21, 24, 30);
     private static final String CHANNEL_ID = "budcem_due_dates";
 
     private final DecimalFormat money = new DecimalFormat("#,##0.00");
@@ -89,8 +89,14 @@ public class MainActivity extends Activity {
     }
 
     private GradientDrawable rounded(int color, int radius) {
-        GradientDrawable d = new GradientDrawable();
-        d.setColor(color);
+        GradientDrawable d;
+        if (color == PURPLE) {
+            d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    new int[]{Color.rgb(255, 137, 0), Color.rgb(255, 79, 24), Color.rgb(205, 42, 12)});
+        } else {
+            d = new GradientDrawable();
+            d.setColor(color);
+        }
         d.setCornerRadius(dp(radius));
         return d;
     }
@@ -174,9 +180,8 @@ public class MainActivity extends Activity {
         nav.setBackgroundColor(WHITE);
         nav.addView(navButton("Ana", 0, activeTab == 0, v -> showHome()));
         nav.addView(navButton("Əməliyyat", 1, activeTab == 1, v -> showTransactions()));
-        nav.addView(navButton("Büdcə", 2, activeTab == 2, v -> showBudgets()));
-        nav.addView(navButton("Borclar", 3, activeTab == 3, v -> showDebts()));
-        nav.addView(navButton("Təhlil", 4, activeTab == 4, v -> showAnalysis()));
+        nav.addView(navButton("Borclar", 2, activeTab == 2, v -> showDebts()));
+        nav.addView(navButton("Təhlil", 3, activeTab == 3, v -> showAnalysis()));
         root.addView(nav);
         setContentView(root);
     }
@@ -229,12 +234,12 @@ public class MainActivity extends Activity {
         double monthExpense = db.sumTransactions("EXPENSE", month);
 
         LinearLayout hero = card(PURPLE);
-        TextView heroLabel = tv("Ümumi balans", 13, Color.rgb(232, 228, 255), false);
+        TextView heroLabel = tv("Ümumi balans", 13, Color.rgb(255, 238, 224), false);
         hero.addView(heroLabel);
         TextView heroValue = tv(azn(balance), 34, WHITE, true);
         heroValue.setPadding(0, dp(5), 0, dp(8));
         hero.addView(heroValue);
-        hero.addView(tv("Sərbəst istifadə: " + azn(free) + "   •   Yığım: " + azn(saved), 12, Color.rgb(240, 237, 255), false));
+        hero.addView(tv("Sərbəst istifadə: " + azn(free) + "   •   Yığım: " + azn(saved), 12, Color.rgb(255, 241, 230), false));
         body.addView(hero);
 
         LinearLayout row1 = new LinearLayout(this);
@@ -256,21 +261,6 @@ public class MainActivity extends Activity {
         row2.addView(d1, half);
         row2.addView(d2, half2);
         body.addView(row2);
-
-        LinearLayout quick = card(WHITE);
-        quick.addView(tv("Sürətli əlavə et", 17, INK, true));
-        LinearLayout qrow = new LinearLayout(this);
-        qrow.setOrientation(LinearLayout.HORIZONTAL);
-        qrow.setPadding(0, dp(10), 0, 0);
-        Button inc = actionButton("+ Gəlir", YELLOW, INK, v -> showTransactionDialog("INCOME"));
-        Button exp = actionButton("+ Xərc", PURPLE_SOFT, PURPLE, v -> showTransactionDialog("EXPENSE"));
-        Button debt = actionButton("+ Borc", Color.rgb(255, 235, 226), RED, v -> showAddDebtDialog());
-        qrow.addView(inc, new LinearLayout.LayoutParams(0, dp(48), 1));
-        LinearLayout.LayoutParams qb = new LinearLayout.LayoutParams(0, dp(48), 1); qb.setMargins(dp(7),0,dp(7),0);
-        qrow.addView(exp, qb);
-        qrow.addView(debt, new LinearLayout.LayoutParams(0, dp(48), 1));
-        quick.addView(qrow);
-        body.addView(quick);
 
         LinearLayout monthCard = card(WHITE);
         monthCard.addView(tv("Ayın vəziyyəti", 17, INK, true));
@@ -366,7 +356,7 @@ public class MainActivity extends Activity {
                 rr.addView(a);
                 list.addView(rr);
                 if (!c.isLast()) {
-                    View line = new View(this); line.setBackgroundColor(Color.rgb(241,239,235)); line.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1))); list.addView(line);
+                    View line = new View(this); line.setBackgroundColor(Color.rgb(43,47,55)); line.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1))); list.addView(line);
                 }
             }
         }
@@ -400,7 +390,7 @@ public class MainActivity extends Activity {
                 int pr = target > 0 ? (int)Math.min(1000, Math.round((saved / target) * 1000)) : 0;
                 pb.setProgress(pr);
                 pb.setProgressTintList(ColorStateList.valueOf(PURPLE));
-                pb.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(237,233,229)));
+                pb.setProgressBackgroundTintList(ColorStateList.valueOf(Color.rgb(48,53,61)));
                 LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(10)); pp.setMargins(0,dp(12),0,dp(12));
                 bc.addView(pb, pp);
                 double pct = target > 0 ? saved * 100 / target : 0;
@@ -441,7 +431,7 @@ public class MainActivity extends Activity {
                 LinearLayout titleRow = new LinearLayout(this); titleRow.setOrientation(LinearLayout.HORIZONTAL); titleRow.setGravity(Gravity.CENTER_VERTICAL);
                 titleRow.addView(tv(name, 18, INK, true), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
                 TextView badge = tv("PAYABLE".equals(dir) ? "VERƏCƏYİM" : "ALACAĞIM", 10, "PAYABLE".equals(dir) ? RED : GREEN, true);
-                badge.setPadding(dp(8),dp(5),dp(8),dp(5)); badge.setBackground(rounded("PAYABLE".equals(dir) ? Color.rgb(255,235,226) : Color.rgb(225,246,237), 12)); titleRow.addView(badge);
+                badge.setPadding(dp(8),dp(5),dp(8),dp(5)); badge.setBackground(rounded("PAYABLE".equals(dir) ? Color.rgb(58,32,31) : Color.rgb(25,49,39), 12)); titleRow.addView(badge);
                 dc.addView(titleRow);
                 TextView rem = tv(azn(remaining), 25, INK, true); rem.setPadding(0,dp(8),0,0); dc.addView(rem);
                 dc.addView(tv("İlkin: " + azn(principal) + "   •   Aylıq: " + azn(monthly) + "\nNövbəti tarix: " + nextDue, 12, MUTED, false));
@@ -456,7 +446,7 @@ public class MainActivity extends Activity {
             }
         }
         if (n == 0) { LinearLayout e = card(WHITE); e.addView(tv("Borc və alacaq əlavə etdikdə aylıq cədvəl burada görünəcək.", 14, MUTED, false)); body.addView(e); }
-        render("Borclarım", body, 3);
+        render("Borclarım", body, 2);
     }
 
     private void showAnalysis() {
@@ -472,7 +462,7 @@ public class MainActivity extends Activity {
         double debtBurden = inc > 0 ? debtPaid * 100 / inc : 0;
 
         LinearLayout hero = card(PURPLE);
-        hero.addView(tv("Aylıq maliyyə nəticəsi", 13, Color.rgb(235,231,255), false));
+        hero.addView(tv("Aylıq maliyyə nəticəsi", 13, Color.rgb(255,235,220), false));
         hero.addView(tv(azn(net), 30, WHITE, true));
         hero.addView(tv(net >= 0 ? "Bu ay gəlir xərci qarşılayır." : "Bu ay xərc gəlirdən çoxdur.", 13, WHITE, false));
         body.addView(hero);
@@ -512,7 +502,7 @@ public class MainActivity extends Activity {
             debtMot.addView(tv("Qalıq: " + azn(r) + ". Davamlı kiçik ödənişlər də borcun müddətini qısaldır.", 13, MUTED, false));
         }
         body.addView(debtMot);
-        render("Aylıq təhlil", body, 4);
+        render("Aylıq təhlil", body, 3);
     }
 
     private LinearLayout analysisLine(String label, String value, int color) {
@@ -552,7 +542,7 @@ public class MainActivity extends Activity {
         e.setTextSize(15);
         e.setSingleLine(true);
         e.setPadding(dp(13),dp(11),dp(13),dp(11));
-        e.setBackground(outlined(WHITE, 14, Color.rgb(226,222,216)));
+        e.setBackground(outlined(WHITE, 14, Color.rgb(57,62,71)));
         if (numeric) e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)); lp.setMargins(0,dp(7),0,0); e.setLayoutParams(lp);
         return e;
@@ -562,7 +552,7 @@ public class MainActivity extends Activity {
         Spinner s = new Spinner(this);
         ArrayAdapter<Object> a = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new ArrayList<Object>((List<Object>)items));
         s.setAdapter(a);
-        s.setBackground(outlined(WHITE, 14, Color.rgb(226,222,216)));
+        s.setBackground(outlined(WHITE, 14, Color.rgb(57,62,71)));
         s.setPadding(dp(8),0,dp(8),0);
         s.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
         return s;
