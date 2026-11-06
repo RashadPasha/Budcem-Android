@@ -351,7 +351,7 @@ public class MainActivity extends Activity {
         TextView mt = tv(msg, 14, INK, false); mt.setPadding(0, dp(8), 0, 0); motivate.addView(mt);
         body.addView(motivate);
 
-        render("Maliyyə panelim", body, 0);
+        render("Finance Control", body, 0);
     }
 
     private void showTransactions() {
