@@ -270,6 +270,43 @@ public class MainActivity extends Activity {
         TextView rt = tv(ratioText, 14, MUTED, false); rt.setPadding(0, dp(8), 0, 0); monthCard.addView(rt);
         body.addView(monthCard);
 
+        LinearLayout latest = card(WHITE);
+        LinearLayout latestHead = new LinearLayout(this);
+        latestHead.setOrientation(LinearLayout.HORIZONTAL);
+        latestHead.setGravity(Gravity.CENTER_VERTICAL);
+        latestHead.addView(tv("Son əməliyyatlar", 17, INK, true), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        TextView all = tv("Hamısına bax  ›", 12, PURPLE, true);
+        all.setOnClickListener(v -> showTransactions());
+        latestHead.addView(all);
+        latest.addView(latestHead);
+        int latestCount = 0;
+        try (Cursor c = db.latestTransactions(5)) {
+            while (c.moveToNext()) {
+                latestCount++;
+                String kind = c.getString(c.getColumnIndexOrThrow("kind"));
+                String category = c.getString(c.getColumnIndexOrThrow("category"));
+                String date = c.getString(c.getColumnIndexOrThrow("date"));
+                double amount = c.getDouble(c.getColumnIndexOrThrow("amount"));
+                LinearLayout item = new LinearLayout(this);
+                item.setOrientation(LinearLayout.HORIZONTAL);
+                item.setGravity(Gravity.CENTER_VERTICAL);
+                item.setPadding(0, dp(12), 0, dp(10));
+                TextView left = tv(category + "\\n" + date, 13, INK, true);
+                TextView right = tv(("INCOME".equals(kind) ? "+ " : "− ") + azn(amount), 13,
+                        "INCOME".equals(kind) ? GREEN : RED, true);
+                item.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+                item.addView(right);
+                latest.addView(item);
+                if (latestCount < 5) {
+                    View line = new View(this);
+                    line.setBackgroundColor(Color.rgb(43, 47, 55));
+                    latest.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1)));
+                }
+            }
+        }
+        if (latestCount == 0) latest.addView(tv("Hələ əməliyyat əlavə edilməyib.", 13, MUTED, false));
+        body.addView(latest);
+
         LinearLayout due = card(WHITE);
         due.addView(tv("Yaxın ödənişlər", 17, INK, true));
         int added = 0;
