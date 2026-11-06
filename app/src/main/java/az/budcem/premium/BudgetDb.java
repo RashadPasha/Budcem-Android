@@ -382,7 +382,7 @@ public class BudgetDb extends SQLiteOpenHelper {
 
     public Cursor monthTransactions(String monthPrefix) {
         return getReadableDatabase().rawQuery(
-                "SELECT t.id AS _id,t.kind,t.amount,t.period,t.date,t.note,COALESCE(c.name,'Borc') AS category " +
+                "SELECT t.id AS _id,t.kind,t.amount,t.period,t.date,t.note,t.debt_id,COALESCE(c.name,'Borc') AS category " +
                         "FROM transactions t LEFT JOIN categories c ON c.id=t.category_id " +
                         "WHERE t.date LIKE ? ORDER BY t.date DESC,t.id DESC LIMIT 100",
                 new String[]{monthPrefix + "%"});
