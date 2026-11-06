@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
 
     private final DecimalFormat money = new DecimalFormat("#,##0.00");
     private BudgetDb db;
+    private String creatingDebtType = "PERSONAL";
 
     static class Choice {
         long id;
@@ -159,7 +160,7 @@ public class MainActivity extends Activity {
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         header.setPadding(dp(20), dp(14), dp(20), dp(12));
-        TextView brand = tv("BÜDCƏM", 12, PURPLE, true);
+        TextView brand = tv("FINANCE CONTROL", 12, PURPLE, true);
         brand.setLetterSpacing(0.12f);
         header.addView(brand);
         TextView h = tv(title, 25, INK, true);
@@ -178,10 +179,11 @@ public class MainActivity extends Activity {
         nav.setGravity(Gravity.CENTER);
         nav.setPadding(dp(6), dp(7), dp(6), dp(9));
         nav.setBackgroundColor(WHITE);
-        nav.addView(navButton("Ana", 0, activeTab == 0, v -> showHome()));
-        nav.addView(navButton("Əməliyyat", 1, activeTab == 1, v -> showTransactions()));
-        nav.addView(navButton("Borclar", 2, activeTab == 2, v -> showDebts()));
-        nav.addView(navButton("Təhlil", 3, activeTab == 3, v -> showAnalysis()));
+        nav.addView(navButton("⌂  Ana", 0, activeTab == 0, v -> showHome()));
+        nav.addView(navButton("＋  Əməliyyat", 1, activeTab == 1, v -> showTransactions()));
+        nav.addView(navButton("⇄  Borc", 2, activeTab == 2, v -> showDebts()));
+        nav.addView(navButton("▣  Kredit", 3, activeTab == 3, v -> showCredits()));
+        nav.addView(navButton("▤  Hesabat", 4, activeTab == 4, v -> showAnalysis()));
         root.addView(nav);
         setContentView(root);
     }
@@ -234,12 +236,13 @@ public class MainActivity extends Activity {
         double monthExpense = db.sumTransactions("EXPENSE", month);
 
         LinearLayout hero = card(PURPLE);
-        TextView heroLabel = tv("Ümumi balans", 13, Color.rgb(255, 238, 224), false);
+        TextView heroLabel = tv("BALANS  •  DEBIT CARD", 13, Color.rgb(255, 238, 224), true);
         hero.addView(heroLabel);
         TextView heroValue = tv(azn(balance), 34, WHITE, true);
         heroValue.setPadding(0, dp(5), 0, dp(8));
         hero.addView(heroValue);
-        hero.addView(tv("Sərbəst istifadə: " + azn(free) + "   •   Yığım: " + azn(saved), 12, Color.rgb(255, 241, 230), false));
+        hero.addView(tv("FINANCE CONTROL     •••• 365", 12, Color.rgb(255, 241, 230), true));
+        hero.addView(tv("Sərbəst: " + azn(free) + "   |   Yığım: " + azn(saved), 12, Color.rgb(255, 241, 230), false));
         body.addView(hero);
 
         LinearLayout row1 = new LinearLayout(this);
@@ -351,55 +354,101 @@ public class MainActivity extends Activity {
     }
 
     private void showTransactions() {
-        LinearLayout body = vertical();
-        String month = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        LinearLayout body=vertical();
+        LinearLayout hero=card(PURPLE);
+        hero.addView(tv("ƏMƏLİYYAT MƏRKƏZİ",12,Color.WHITE,true));
+        hero.addView(tv("Maliyyə hərəkətini seç və ayrıca qeyd et.",16,Color.WHITE,true));
+        body.addView(hero);
+        String[] labels={"Gəlir yarat","Xərc et","Borc ödə","Borc yarat","Kredit ödə","Kredit yarat","Planlanan xərc yarat"};
+        String[] icons={"＋","−","↘","↗","▣","＋","◷"};
+        int[] colors={GREEN,RED,PURPLE,YELLOW,GREEN,PURPLE,YELLOW};
+        for(int i=0;i<labels.length;i++){
+            final int action=i;
+            LinearLayout item=card(WHITE);
+            LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
+            TextView ico=tv(icons[i],25,colors[i],true); ico.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams ip=new LinearLayout.LayoutParams(dp(48),dp(48)); row.addView(ico,ip);
+            TextView name=tv(labels[i],16,INK,true); name.setPadding(dp(12),0,0,0);
+            row.addView(name,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+            TextView arrow=tv("›",25,MUTED,true);row.addView(arrow);
+            item.addView(row);
+            item.setOnClickListener(v->runOperation(action));
+            body.addView(item);
+        }
+        LinearLayout cats=card(WHITE);
+        cats.addView(tv("Kateqoriyalar",16,INK,true));
+        cats.addView(tv("Gəlir və xərc kateqoriyalarını ayrıca idarə et.",13,MUTED,false));
+        cats.setOnClickListener(v->showCategories()); body.addView(cats);
+        render("Əməliyyatlar",body,1);
+    }
 
-        LinearLayout add = card(WHITE);
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.addView(actionButton("+ Gəlir", YELLOW, INK, v -> showTransactionDialog("INCOME")), new LinearLayout.LayoutParams(0, dp(50), 1));
-        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(50), 1); p.setMargins(dp(8),0,0,0);
-        r.addView(actionButton("+ Xərc", PURPLE, WHITE, v -> showTransactionDialog("EXPENSE")), p);
-        add.addView(r);
-        Button cat = actionButton("Kateqoriyaları idarə et", PURPLE_SOFT, PURPLE, v -> showCategories());
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)); cp.setMargins(0, dp(9), 0, 0);
-        add.addView(cat, cp);
-        body.addView(add);
+    private void runOperation(int action) {
+        switch(action){
+            case 0: showTransactionDialog("INCOME"); break;
+            case 1: showTransactionDialog("EXPENSE"); break;
+            case 2: showDebtPaymentPicker("PERSONAL"); break;
+            case 3: creatingDebtType="PERSONAL"; showAddDebtDialog(); break;
+            case 4: showDebtPaymentPicker("CREDIT"); break;
+            case 5: creatingDebtType="CREDIT"; showAddDebtDialog(); break;
+            case 6: showAddPlannedExpenseDialog(); break;
+        }
+    }
 
-        LinearLayout summary = card(YELLOW_SOFT);
-        summary.addView(tv("Bu ay", 13, MUTED, false));
-        summary.addView(tv("Gəlir " + azn(db.sumTransactions("INCOME", month)) + "   •   Xərc " + azn(db.sumTransactions("EXPENSE", month)), 16, INK, true));
-        body.addView(summary);
+    private void showDebtPaymentPicker(String type) {
+        List<Choice> choices=new ArrayList<>();
+        try(Cursor c=db.debtsByType(type)){
+            while(c.moveToNext()) if(c.getDouble(c.getColumnIndexOrThrow("remaining"))>0.005)
+                choices.add(new Choice(c.getLong(c.getColumnIndexOrThrow("_id")),c.getString(c.getColumnIndexOrThrow("name")),c.getDouble(c.getColumnIndexOrThrow("remaining"))));
+        }
+        if(choices.isEmpty()){toast(type.equals("CREDIT")?"Aktiv kredit yoxdur.":"Aktiv borc yoxdur.");return;}
+        Spinner sp=spinner(choices);
+        LinearLayout box=vertical();box.setPadding(dp(18),dp(8),dp(18),0);box.addView(sp);
+        new AlertDialog.Builder(this).setTitle(type.equals("CREDIT")?"Kredit ödə":"Borc ödə").setView(box)
+          .setNegativeButton("Ləğv et",null).setPositiveButton("Davam et",(d,w)->{
+            Choice c=(Choice)sp.getSelectedItem();
+            if(c!=null)showPayDebtDialog(c.id,c.label,c.extra,Math.min(c.extra,c.extra));
+          }).show();
+    }
 
-        LinearLayout list = card(WHITE);
-        list.addView(tv("Əməliyyatlar", 17, INK, true));
-        int n = 0;
-        try (Cursor c = db.monthTransactions(month)) {
-            while (c.moveToNext()) {
-                n++;
-                String kind = c.getString(c.getColumnIndexOrThrow("kind"));
-                double amount = c.getDouble(c.getColumnIndexOrThrow("amount"));
-                String date = c.getString(c.getColumnIndexOrThrow("date"));
-                String category = c.getString(c.getColumnIndexOrThrow("category"));
-                String note = c.getString(c.getColumnIndexOrThrow("note"));
-                LinearLayout rr = new LinearLayout(this);
-                rr.setOrientation(LinearLayout.HORIZONTAL);
-                rr.setGravity(Gravity.CENTER_VERTICAL);
-                rr.setPadding(0, dp(10), 0, dp(10));
-                String sub = category + " • " + date + (note == null || note.isEmpty() ? "" : "\n" + note);
-                TextView l = tv(sub, 13, INK, false);
-                TextView a = tv(("INCOME".equals(kind) ? "+ " : "− ") + azn(amount), 14, "INCOME".equals(kind) ? GREEN : RED, true);
-                rr.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                rr.addView(a);
-                list.addView(rr);
-                if (!c.isLast()) {
-                    View line = new View(this); line.setBackgroundColor(Color.rgb(43,47,55)); line.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(1))); list.addView(line);
-                }
+    private void showAddPlannedExpenseDialog(){
+        LinearLayout box=vertical();box.setPadding(dp(18),dp(8),dp(18),0);
+        EditText name=input("Xərcin adı",false), category=input("Kateqoriya",false), amount=input("Məbləğ",true), date=input("Son tarix (YYYY-MM-DD)",false);
+        date.setText(LocalDate.now().toString());
+        Spinner mandatory=spinner(List.of("Məcburi xərc","İstəyə bağlı xərc"));
+        box.addView(name);box.addView(category);box.addView(amount);box.addView(date);box.addView(mandatory);
+        new AlertDialog.Builder(this).setTitle("Planlanan xərc yarat").setView(box).setNegativeButton("Ləğv et",null)
+          .setPositiveButton("Yadda saxla",(d,w)->{
+            double a=parseAmount(amount.getText().toString());
+            if(name.getText().toString().trim().isEmpty()||category.getText().toString().trim().isEmpty()||a<=0||!validDate(date.getText().toString())){toast("Məlumatları düzgün doldur.");return;}
+            db.addPlannedExpense(name.getText().toString(),category.getText().toString(),a,date.getText().toString(),mandatory.getSelectedItemPosition()==0);
+            showPlannedExpenses();
+          }).show();
+    }
+
+    private void showPlannedExpenses(){
+        LinearLayout body=vertical();
+        LinearLayout top=card(PURPLE_SOFT);top.addView(tv("Açıq planlanan xərclər",15,INK,true));
+        top.addView(tv(azn(db.plannedExpenseOutstanding())+" qalıq öhdəlik",22,Color.WHITE,true));
+        top.addView(actionButton("+ Planlanan xərc yarat",PURPLE,Color.WHITE,v->showAddPlannedExpenseDialog()));body.addView(top);
+        int count=0;
+        try(Cursor c=db.plannedExpenses()){
+            while(c.moveToNext()){
+                count++;long id=c.getLong(c.getColumnIndexOrThrow("_id"));String name=c.getString(c.getColumnIndexOrThrow("name"));
+                String cat=c.getString(c.getColumnIndexOrThrow("category"));double amount=c.getDouble(c.getColumnIndexOrThrow("amount"));
+                double paid=c.getDouble(c.getColumnIndexOrThrow("paid"));String date=c.getString(c.getColumnIndexOrThrow("due_date"));
+                boolean mandatory=c.getInt(c.getColumnIndexOrThrow("mandatory"))==1;
+                LinearLayout item=card(WHITE);item.addView(tv(name,16,INK,true));
+                item.addView(tv(cat+" • "+date+" • "+(mandatory?"Məcburi":"İstəyə bağlı"),12,MUTED,false));
+                item.addView(tv("Qalıq: "+azn(Math.max(0,amount-paid)),15,paid>=amount?GREEN:RED,true));
+                if(paid<amount){item.addView(actionButton("Ödənişi qeyd et",PURPLE_SOFT,PURPLE,v->{
+                    EditText val=input("Ödənilən məbləğ",true);val.setText(String.format(Locale.US,"%.2f",amount-paid));
+                    new AlertDialog.Builder(this).setTitle(name).setView(val).setNegativeButton("Ləğv et",null).setPositiveButton("Təsdiq",(dd,ww)->{double x=parseAmount(val.getText().toString());if(x>0){db.payPlannedExpense(id,x);showPlannedExpenses();}}).show();
+                }));}
+                body.addView(item);
             }
         }
-        if (n == 0) { TextView e = tv("Bu ay üçün əməliyyat yoxdur.", 13, MUTED, false); e.setPadding(0,dp(12),0,0); list.addView(e); }
-        body.addView(list);
-        render("Gəlir və xərclər", body, 1);
+        if(count==0)body.addView(tv("Hələ planlanan xərc yoxdur.",14,MUTED,false));
+        render("Planlanan xərclər",body,1);
     }
 
     private void showBudgets() {
@@ -443,103 +492,64 @@ public class MainActivity extends Activity {
         render("Büdcələrim", body, 2);
     }
 
-    private void showDebts() {
-        LinearLayout body = vertical();
-        LinearLayout top = card(PURPLE_SOFT);
-        top.addView(tv("Borc və alacaqlar", 18, INK, true));
-        top.addView(tv("Verəcəyim: " + azn(db.totalDebtRemaining("PAYABLE")) + "   •   Alacağım: " + azn(db.totalDebtRemaining("RECEIVABLE")), 13, PURPLE, true));
-        Button add = actionButton("+ Yeni borc / alacaq", PURPLE, WHITE, v -> showAddDebtDialog());
-        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)); ap.setMargins(0,dp(12),0,0); top.addView(add, ap);
+    private void showDebts() { showDebtList("PERSONAL","Şəxsi borclar"); }
+    private void showCredits() { showDebtList("CREDIT","Kreditlər"); }
+    private void showDebtList(String type,String title) {
+        LinearLayout body=vertical();
+        LinearLayout top=card(PURPLE_SOFT);
+        top.addView(tv(title,18,INK,true));
+        top.addView(tv("Qalıq: "+azn(type.equals("CREDIT")?sumDebtType("CREDIT"):sumDebtType("PERSONAL")),15,PURPLE,true));
+        top.addView(actionButton(type.equals("CREDIT")?"+ Kredit yarat":"+ Borc yarat",PURPLE,Color.WHITE,v->{creatingDebtType=type;showAddDebtDialog();}));
         body.addView(top);
-
-        int n = 0;
-        try (Cursor c = db.debts()) {
-            while (c.moveToNext()) {
-                n++;
-                long id = c.getLong(c.getColumnIndexOrThrow("_id"));
-                String name = c.getString(c.getColumnIndexOrThrow("name"));
-                String dir = c.getString(c.getColumnIndexOrThrow("direction"));
-                double principal = c.getDouble(c.getColumnIndexOrThrow("principal"));
-                double remaining = c.getDouble(c.getColumnIndexOrThrow("remaining"));
-                double monthly = c.getDouble(c.getColumnIndexOrThrow("monthly"));
-                String nextDue = c.isNull(c.getColumnIndexOrThrow("next_due")) ? "Bağlanıb" : c.getString(c.getColumnIndexOrThrow("next_due"));
-
-                LinearLayout dc = card(WHITE);
-                LinearLayout titleRow = new LinearLayout(this); titleRow.setOrientation(LinearLayout.HORIZONTAL); titleRow.setGravity(Gravity.CENTER_VERTICAL);
-                titleRow.addView(tv(name, 18, INK, true), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                TextView badge = tv("PAYABLE".equals(dir) ? "VERƏCƏYİM" : "ALACAĞIM", 10, "PAYABLE".equals(dir) ? RED : GREEN, true);
-                badge.setPadding(dp(8),dp(5),dp(8),dp(5)); badge.setBackground(rounded("PAYABLE".equals(dir) ? Color.rgb(58,32,31) : Color.rgb(25,49,39), 12)); titleRow.addView(badge);
-                dc.addView(titleRow);
-                TextView rem = tv(azn(remaining), 25, INK, true); rem.setPadding(0,dp(8),0,0); dc.addView(rem);
-                dc.addView(tv("İlkin: " + azn(principal) + "   •   Aylıq: " + azn(monthly) + "\nNövbəti tarix: " + nextDue, 12, MUTED, false));
-                double closed = principal > 0 ? (principal - remaining) / principal : 1;
-                ProgressBar pb = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); pb.setMax(1000); pb.setProgress((int)Math.max(0,Math.min(1000,closed*1000))); pb.setProgressTintList(ColorStateList.valueOf("PAYABLE".equals(dir) ? PURPLE : GREEN));
-                LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(9)); pp.setMargins(0,dp(10),0,dp(10)); dc.addView(pb, pp);
-                LinearLayout actions = new LinearLayout(this); actions.setOrientation(LinearLayout.HORIZONTAL);
-                Button pay = actionButton("Ödəniş et", "PAYABLE".equals(dir) ? PURPLE : GREEN, WHITE, v -> showPayDebtDialog(id, name, remaining, monthly));
-                Button table = actionButton("Cədvəl", PURPLE_SOFT, PURPLE, v -> showDebtScheduleDialog(id, name));
-                actions.addView(pay, new LinearLayout.LayoutParams(0,dp(46),1)); LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0,dp(46),1); tp.setMargins(dp(8),0,0,0); actions.addView(table,tp); dc.addView(actions);
-                body.addView(dc);
+        int n=0;
+        try(Cursor c=db.debtsByType(type)){
+            while(c.moveToNext()){
+                n++;long id=c.getLong(c.getColumnIndexOrThrow("_id"));String name=c.getString(c.getColumnIndexOrThrow("name"));
+                String dir=c.getString(c.getColumnIndexOrThrow("direction"));double principal=c.getDouble(c.getColumnIndexOrThrow("principal"));
+                double remaining=c.getDouble(c.getColumnIndexOrThrow("remaining"));double monthly=c.getDouble(c.getColumnIndexOrThrow("monthly"));
+                String due=c.isNull(c.getColumnIndexOrThrow("next_due"))?"Bağlanıb":c.getString(c.getColumnIndexOrThrow("next_due"));
+                LinearLayout item=card(WHITE);item.addView(tv(name,17,INK,true));
+                item.addView(tv(("PAYABLE".equals(dir)?"ÖDƏNİLƏCƏK":"ALINACAQ")+" • "+due,12,MUTED,false));
+                item.addView(tv(azn(remaining),25,INK,true));
+                item.addView(tv("İlkin: "+azn(principal)+" • Aylıq: "+azn(monthly),12,MUTED,false));
+                item.addView(actionButton("Ödəniş et",PURPLE,Color.WHITE,v->showPayDebtDialog(id,name,remaining,monthly)));
+                item.setOnClickListener(v->showDebtScheduleDialog(id,name));body.addView(item);
             }
         }
-        if (n == 0) { LinearLayout e = card(WHITE); e.addView(tv("Borc və alacaq əlavə etdikdə aylıq cədvəl burada görünəcək.", 14, MUTED, false)); body.addView(e); }
-        render("Borclarım", body, 2);
+        if(n==0)body.addView(tv(type.equals("CREDIT")?"Kredit əlavə edilməyib.":"Borc əlavə edilməyib.",14,MUTED,false));
+        render(title,body,type.equals("CREDIT")?3:2);
+    }
+    private double sumDebtType(String type){
+        double sum=0;try(Cursor c=db.debtsByType(type)){while(c.moveToNext())sum+=c.getDouble(c.getColumnIndexOrThrow("remaining"));}return sum;
     }
 
     private void showAnalysis() {
-        LinearLayout body = vertical();
-        String month = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
-        double inc = db.sumTransactions("INCOME", month);
-        double exp = db.sumTransactions("EXPENSE", month);
-        double savedMonth = db.monthBudgetMoves(month);
-        double debtPaid = db.sumDebtTransactions(month);
-        double net = inc - exp;
-        double savingsRate = inc > 0 ? savedMonth * 100 / inc : 0;
-        double expenseRate = inc > 0 ? exp * 100 / inc : 0;
-        double debtBurden = inc > 0 ? debtPaid * 100 / inc : 0;
-
-        LinearLayout hero = card(PURPLE);
-        hero.addView(tv("Aylıq maliyyə nəticəsi", 13, Color.rgb(255,235,220), false));
-        hero.addView(tv(azn(net), 30, WHITE, true));
-        hero.addView(tv(net >= 0 ? "Bu ay gəlir xərci qarşılayır." : "Bu ay xərc gəlirdən çoxdur.", 13, WHITE, false));
-        body.addView(hero);
-
-        LinearLayout rates = card(WHITE);
-        rates.addView(tv("Əsas göstəricilər", 17, INK, true));
-        rates.addView(analysisLine("Xərc / gəlir", Math.round(expenseRate) + "%", expenseRate <= 80 ? GREEN : RED));
-        rates.addView(analysisLine("Yığıma ayrılan", Math.round(savingsRate) + "%", PURPLE));
-        rates.addView(analysisLine("Borc ödəniş yükü", Math.round(debtBurden) + "%", debtBurden <= 30 ? GREEN : RED));
-        rates.addView(analysisLine("Ən böyük xərc kateqoriyası", db.topExpenseCategory(month) + " ₼", INK));
-        body.addView(rates);
-
-        LinearLayout insight = card(YELLOW_SOFT);
-        insight.addView(tv("Ağıllı ay təhlili", 17, INK, true));
-        List<String> tips = new ArrayList<>();
-        if (inc <= 0) tips.add("Gəliri əlavə etdikdə ayın real yük və qənaət faizləri görünəcək.");
-        else {
-            if (expenseRate > 100) tips.add("Xərc gəliri keçib. Növbəti ay ilk hədəf xərcləri ən azı gəlirin 90%-indən aşağı salmaqdır.");
-            else if (expenseRate > 85) tips.add("Balans müsbət olsa da təhlükəsizlik payın zəifdir. Ən böyük kateqoriyada kiçik azalma ciddi fərq yarada bilər.");
-            else tips.add("Xərc nisbətin idarəolunandır. Qalan hissənin bir qismini məqsəd büdcəsinə yönəltmək borc və yığım planını sürətləndirər.");
-            if (debtBurden > 40) tips.add("Borc ödənişləri aylıq gəlirin böyük hissəsini tutur. Yeni öhdəlik götürməmək hazırda ən güclü qərardır.");
-            if (savingsRate < 5 && net > 0) tips.add("Müsbət qalıq var, amma yığıma az yönəlib. Kiçik avtomatik hədəf belə ayın sonunda görünən nəticə yaradar.");
-            if (savingsRate >= 10) tips.add("Yığım tempin yaxşıdır. Məqsəd büdcəsini davamlı saxlamaq maliyyə ehtiyatını böyüdür.");
-        }
-        for (String tip : tips) { TextView t = tv("• " + tip, 14, INK, false); t.setPadding(0,dp(9),0,0); insight.addView(t); }
-        body.addView(insight);
-
-        double p = db.totalDebtPrincipal("PAYABLE");
-        double r = db.totalDebtRemaining("PAYABLE");
-        LinearLayout debtMot = card(PURPLE_SOFT);
-        debtMot.addView(tv("Borc bağlama göstəricisi", 17, INK, true));
-        if (p <= 0) {
-            debtMot.addView(tv("Aktiv verəcəyin borc yoxdur.", 14, GREEN, true));
-        } else {
-            double done = (p-r)*100/p;
-            debtMot.addView(tv(Math.round(done) + "% bağlanıb", 23, PURPLE, true));
-            debtMot.addView(tv("Qalıq: " + azn(r) + ". Davamlı kiçik ödənişlər də borcun müddətini qısaldır.", 13, MUTED, false));
-        }
-        body.addView(debtMot);
-        render("Aylıq təhlil", body, 3);
+        LinearLayout body=vertical();
+        String month=LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        double inc=db.sumTransactions("INCOME",month),exp=db.sumTransactions("EXPENSE",month);
+        double credits=sumDebtType("CREDIT"),debts=sumDebtType("PERSONAL");
+        LinearLayout hero=card(PURPLE);hero.addView(tv("HESABAT MƏRKƏZİ",12,Color.WHITE,true));
+        hero.addView(tv("Xalis nəticə: "+azn(inc-exp),27,Color.WHITE,true));body.addView(hero);
+        body.addView(reportCard("Gəlir hesabatı","Tarix • məbləğ • kateqoriya • qalıq balans",inc,"INCOME",month));
+        body.addView(reportCard("Xərc hesabatı","Tarix • məbləğ • kateqoriya • ümumi xərc",exp,"EXPENSE",month));
+        body.addView(reportStatic("Kredit hesabatı","Aktiv kredit qalığı",credits));
+        body.addView(reportStatic("Borc hesabatı","Şəxsi borc və alacaq qalığı",debts));
+        body.addView(reportStatic("Planlanan ödənişlər","Ödənilməmiş planlanan xərclər",db.plannedExpenseOutstanding()));
+        LinearLayout details=card(WHITE);details.addView(tv("Kateqoriya üzrə xərc",16,INK,true));
+        details.addView(tv(db.topExpenseCategory(month),14,RED,true));body.addView(details);
+        render("Hesabatlar",body,4);
+    }
+    private LinearLayout reportCard(String title,String subtitle,double value,String kind,String month){
+        LinearLayout c=card(WHITE);c.addView(tv(title,16,INK,true));c.addView(tv(subtitle,12,MUTED,false));
+        c.addView(tv(azn(value),22,kind.equals("INCOME")?GREEN:RED,true));
+        try(Cursor cur=db.monthTransactions(month)){while(cur.moveToNext()){
+            if(!kind.equals(cur.getString(cur.getColumnIndexOrThrow("kind"))))continue;
+            c.addView(tv(cur.getString(cur.getColumnIndexOrThrow("date"))+" • "+cur.getString(cur.getColumnIndexOrThrow("category"))+" • "+azn(cur.getDouble(cur.getColumnIndexOrThrow("amount"))),12,INK,false));
+        }}
+        return c;
+    }
+    private LinearLayout reportStatic(String title,String subtitle,double value){
+        LinearLayout c=card(WHITE);c.addView(tv(title,16,INK,true));c.addView(tv(subtitle,12,MUTED,false));c.addView(tv(azn(value),22,PURPLE,true));return c;
     }
 
     private LinearLayout analysisLine(String label, String value, int color) {
@@ -724,18 +734,20 @@ public class MainActivity extends Activity {
     }
 
     private void showAddDebtDialog() {
-        LinearLayout box=vertical(); box.setPadding(dp(18),dp(8),dp(18),0);
-        EditText name=input("Borc / şəxs / kredit adı",false);
-        Spinner direction=spinner(List.of("Mən ödəyəcəyəm", "Mən alacağam"));
-        EditText principal=input("Ümumi məbləğ",true);
-        EditText monthly=input("Aylıq ödəniş",true);
-        EditText first=input("İlk ödəniş tarixi (YYYY-MM-DD)",false); first.setText(LocalDate.now().plusMonths(1).toString());
-        box.addView(name); box.addView(direction); box.addView(principal); box.addView(monthly); box.addView(first);
-        new AlertDialog.Builder(this).setTitle("Yeni borc / alacaq").setView(box).setNegativeButton("Ləğv et",null).setPositiveButton("Cədvəl yarat",(d,w)->{
-            double p=parseAmount(principal.getText().toString()); double m=parseAmount(monthly.getText().toString());
+        LinearLayout box=vertical();box.setPadding(dp(18),dp(8),dp(18),0);
+        EditText name=input(creatingDebtType.equals("CREDIT")?"Bank / kredit adı":"Borc / şəxs adı",false);
+        Spinner direction=spinner(List.of("Mən ödəyəcəyəm","Mən alacağam"));
+        EditText principal=input("Ümumi məbləğ",true),monthly=input("Aylıq ödəniş",true);
+        EditText first=input("İlk ödəniş tarixi (YYYY-MM-DD)",false);first.setText(LocalDate.now().plusMonths(1).toString());
+        box.addView(name);box.addView(direction);box.addView(principal);box.addView(monthly);box.addView(first);
+        new AlertDialog.Builder(this).setTitle(creatingDebtType.equals("CREDIT")?"Kredit yarat":"Borc yarat").setView(box).setNegativeButton("Ləğv et",null)
+          .setPositiveButton("Yarat",(d,w)->{
+            double p=parseAmount(principal.getText().toString()),m=parseAmount(monthly.getText().toString());
             if(name.getText().toString().trim().isEmpty()||p<=0||m<=0||!validDate(first.getText().toString())){toast("Məlumatları düzgün doldur.");return;}
-            String dir=direction.getSelectedItemPosition()==0?"PAYABLE":"RECEIVABLE"; db.addDebt(name.getText().toString(),dir,p,m,first.getText().toString()); scheduleAllOpen(this); showDebts();
-        }).show();
+            String dir=direction.getSelectedItemPosition()==0?"PAYABLE":"RECEIVABLE";
+            db.addDebt(name.getText().toString(),dir,p,m,first.getText().toString(),creatingDebtType);
+            scheduleAllOpen(this);if(creatingDebtType.equals("CREDIT"))showCredits();else showDebts();
+          }).show();
     }
 
     private void showPayDebtDialog(long debtId, String name, double remaining, double monthly) {
