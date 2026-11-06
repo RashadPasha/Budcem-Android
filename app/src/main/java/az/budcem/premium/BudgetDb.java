@@ -378,6 +378,15 @@ public class BudgetDb extends SQLiteOpenHelper {
                 new String[]{monthPrefix + "%"});
     }
 
+    public Cursor latestTransactions(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        return getReadableDatabase().rawQuery(
+                "SELECT t.id AS _id,t.kind,t.amount,t.period,t.date,t.note,COALESCE(c.name,'Borc') AS category " +
+                        "FROM transactions t LEFT JOIN categories c ON c.id=t.category_id " +
+                        "ORDER BY t.date DESC,t.id DESC LIMIT ?",
+                new String[]{String.valueOf(safeLimit)});
+    }
+
     public String debtName(long debtId) {
         try (Cursor c = getReadableDatabase().rawQuery("SELECT name FROM debts WHERE id=?", new String[]{String.valueOf(debtId)})) {
             return c.moveToFirst() ? c.getString(0) : "Borc";
