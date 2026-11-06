@@ -452,6 +452,74 @@ public class MainActivity extends Activity {
         render("Planlanan xərclər",body,1);
     }
 
+
+    private void showTransactionHistory() {
+        LinearLayout body=vertical();
+        String first=LocalDate.now().withDayOfMonth(1).toString();
+        String last=LocalDate.now().toString();
+        LinearLayout filter=card(WHITE);
+        EditText from=input("Başlanğıc tarix (YYYY-MM-DD)",false); from.setText(first);
+        EditText to=input("Son tarix (YYYY-MM-DD)",false); to.setText(last);
+        filter.addView(tv("Tarix aralığı",15,INK,true)); filter.addView(from); filter.addView(to);
+        LinearLayout list=vertical();
+        Runnable load=()->{
+            list.removeAllViews();
+            if(!validDate(from.getText().toString())||!validDate(to.getText().toString())||
+                    from.getText().toString().compareTo(to.getText().toString())>0) {
+                list.addView(tv("Tarix aralığını düzgün daxil et.",13,RED,true)); return;
+            }
+            int n=0;
+            try(Cursor c=db.transactionsBetween(from.getText().toString(),to.getText().toString())){
+                while(c.moveToNext()){
+                    n++;
+                    long id=c.getLong(c.getColumnIndexOrThrow("_id"));
+                    String kind=c.getString(c.getColumnIndexOrThrow("kind"));
+                    String category=c.getString(c.getColumnIndexOrThrow("category"));
+                    String date=c.getString(c.getColumnIndexOrThrow("date"));
+                    String note=c.getString(c.getColumnIndexOrThrow("note"));
+                    double amount=c.getDouble(c.getColumnIndexOrThrow("amount"));
+                    LinearLayout item=card(WHITE);
+                    LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);
+                    TextView details=tv(category+" • "+date+"\\n"+(note==null?"":note),13,INK,true);
+                    row.addView(details,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));
+                    TextView value=tv(("INCOME".equals(kind)?"+ ":"− ")+azn(amount),14,"INCOME".equals(kind)?GREEN:RED,true);
+                    row.addView(value);item.addView(row);
+                    if(!"PAYABLE".equals(kind)&&!"RECEIVABLE".equals(kind)){
+                        LinearLayout actions=new LinearLayout(this);actions.setGravity(Gravity.END);
+                        actions.addView(actionButton("✎ Redaktə",PURPLE_SOFT,PURPLE,v->editTransaction(id,amount,date,note)));
+                        LinearLayout.LayoutParams delp=new LinearLayout.LayoutParams(dp(100),dp(44));delp.setMargins(dp(8),0,0,0);
+                        actions.addView(actionButton("⌫ Sil",Color.rgb(54,30,32),RED,v->{
+                            new AlertDialog.Builder(this).setTitle("Əməliyyatı sil")
+                              .setMessage("Bu əməliyyatı silmək istədiyinə əminsən?")
+                              .setNegativeButton("Ləğv et",null).setPositiveButton("Sil",(dd,ww)->{db.deleteTransaction(id);load.run();}).show();
+                        }),delp);
+                        item.addView(actions);
+                    } else item.addView(tv("Borc/kredit ödənişi — cədvəldən idarə olunur.",11,MUTED,false));
+                    list.addView(item);
+                }
+            }
+            if(n==0)list.addView(tv("Bu tarix aralığında əməliyyat yoxdur.",13,MUTED,false));
+        };
+        filter.addView(actionButton("Tətbiq et",PURPLE,Color.WHITE,v->load.run()));
+        body.addView(filter);body.addView(list);load.run();
+        render("Əməliyyat tarixçəsi",body,1);
+    }
+
+    private void editTransaction(long id,double oldAmount,String oldDate,String oldNote) {
+        LinearLayout box=vertical();box.setPadding(dp(18),dp(8),dp(18),0);
+        EditText amount=input("Məbləğ",true);amount.setText(String.format(Locale.US,"%.2f",oldAmount));
+        EditText date=input("Tarix (YYYY-MM-DD)",false);date.setText(oldDate);
+        EditText note=input("Qeyd",false);note.setText(oldNote==null?"":oldNote);
+        box.addView(amount);box.addView(date);box.addView(note);
+        new AlertDialog.Builder(this).setTitle("Əməliyyatı redaktə et").setView(box)
+          .setNegativeButton("Ləğv et",null).setPositiveButton("Yadda saxla",(d,w)->{
+            double a=parseAmount(amount.getText().toString());
+            if(a<=0||!validDate(date.getText().toString())){toast("Məbləğ və tarix düzgün deyil.");return;}
+            db.updateTransaction(id,a,date.getText().toString(),note.getText().toString());
+            showTransactionHistory();
+          }).show();
+    }
+
     private void showBudgets() {
         LinearLayout body = vertical();
         LinearLayout top = card(YELLOW_SOFT);
